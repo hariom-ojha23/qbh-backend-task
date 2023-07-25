@@ -5,7 +5,7 @@ import { UserController } from './user/user.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 
 @Module({
-  imports: [MongooseModule.forRoot('mongodb://localhost:27017', { dbName: "QBH" }), UserModule
+  imports: [MongooseModule.forRoot('mongodb+srv://task:task@cluster0.oqwabdu.mongodb.net/?retryWrites=true&w=majority', { dbName: "QBH" }), UserModule
 
   ],
   controllers: [],
