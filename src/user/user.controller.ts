@@ -2,10 +2,9 @@ import { Controller, Delete, Get, Post, Put, Body, Param, Res, HttpStatus } from
 import { UserService } from './user.service';
 import { CreateUserDto } from 'src/dto/create-user.dto';
 import { User } from 'src/schemas/user.schema';
-import { IUser } from 'src/interface/user.interface';
 import { UpdateUserDto } from 'src/dto/update-user.dto';
-import { response } from 'express';
-@Controller('user')
+
+@Controller('users')
 export class UserController {
     constructor(
         private readonly userService: UserService
