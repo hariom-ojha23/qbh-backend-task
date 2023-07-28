@@ -45,7 +45,10 @@ export class UserService {
             const createdUser = await this.userModel.create(user);
             return createdUser;
         } catch (error) {
-            throw new BadRequestException(error.message);
+            if (error instanceof BadRequestException) {
+                throw error;
+            }
+            throw new Error('Unexpected error occurred.');
         }
     }
 
@@ -64,7 +67,10 @@ export class UserService {
             }
             return user;
         } catch (error) {
-            throw new BadRequestException(error.message);
+            if (error instanceof BadRequestException || error instanceof NotFoundException) {
+                throw error;
+            }
+            throw new Error('Unexpected error occurred.');
         }
     }
 
