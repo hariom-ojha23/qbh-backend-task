@@ -1,131 +1,121 @@
-import { Controller, Delete, Get, Post, Put, Body, Param, Res, HttpStatus } from '@nestjs/common';
+import {
+    Controller,
+    Get,
+    Post,
+    Put,
+    Delete,
+    Body,
+    Param,
+    Res,
+    HttpStatus,
+    NotFoundException,
+    BadRequestException,
+    Query
+} from '@nestjs/common';
 import { UserService } from './user.service';
-import { CreateUserDto } from 'src/dto/create-user.dto';
-import { User } from 'src/schemas/user.schema';
-import { UpdateUserDto } from 'src/dto/update-user.dto';
+import { User } from './schema/user.schema';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { Query as ExpressQuery } from 'express-serve-static-core';
 
 @Controller('users')
 export class UserController {
-    constructor(
-        private readonly userService: UserService
-    ) { }
+    constructor(private userService: UserService) { }
 
-
-    @Post()
-    async createNewUser(@Res() response, @Body() createUserDto: CreateUserDto): Promise<User> {
+    @Get()
+    async getAllUsers(
+        @Res() res,
+        @Query() query: ExpressQuery
+    ): Promise<User[]> {
         try {
-
-            const user = await this.userService.createNewUser(createUserDto);
-            return response.status(HttpStatus.CREATED).json({
+            const users = await this.userService.findAll(query)
+            return res.status(HttpStatus.OK).json({
                 success: true,
-                message: "User Created Successfully",
-                user,
-                statusCode: HttpStatus.CREATED
-
+                statusCode: HttpStatus.OK,
+                message: users.length > 0 ? "Users successfully found" : "Users not found",
+                data: users
             })
-
         } catch (error) {
-
-            return response.status(HttpStatus.BAD_REQUEST).json({
-                success: false,
-                errorStack: error,
-                message: error.message,
-                statusCode: HttpStatus.BAD_REQUEST
-
-            })
+            throw new NotFoundException(error.message || 'Failed to fetch users');
         }
     }
 
-    @Get()
-    async getAllUsers(@Res() response): Promise<User[]> {
-
+    @Post()
+    async createUser(
+        @Res() res,
+        @Body() user: CreateUserDto
+    ): Promise<User> {
         try {
-            const users = await this.userService.getAllUsers()
-            return response.status(HttpStatus.FOUND).json({
+            const createdUser = await this.userService.create(user);
+            return res.status(HttpStatus.CREATED).json({
                 success: true,
-                users,
-                statusCode: HttpStatus.FOUND
+                statusCode: HttpStatus.CREATED,
+                message: "User successfully created",
+                data: createdUser
             })
         } catch (error) {
-            return response.status(HttpStatus.BAD_REQUEST).json({
-                success: false,
-                errorStack: error,
-                message: error.message,
-                statusCode: HttpStatus.BAD_REQUEST
-
-            })
+            throw new BadRequestException(error.message || 'Failed to create user');
         }
     }
 
     @Get(":id")
-    async getUserById(@Res() response, @Param('id') id: string): Promise<User> {
-
+    async getUser(
+        @Res() res,
+        @Param("id") id: string
+    ): Promise<User> {
         try {
-
-            const user = await this.userService.getUserById(id)
-
-            return response.status(HttpStatus.FOUND).json({
+            const user = await this.userService.findById(id)
+            return res.status(HttpStatus.OK).json({
                 success: true,
-                user,
-                statusCode: HttpStatus.FOUND
+                statusCode: HttpStatus.OK,
+                message: "User data found",
+                data: user
             })
-
         } catch (error) {
-
-            return response.status(HttpStatus.BAD_REQUEST).json({
-                success: false,
-                errorStack: error,
-                message: error.message,
-                statusCode: HttpStatus.BAD_REQUEST
-
-            })
+            throw new NotFoundException(error.message || 'Failed to fetch user');
         }
     }
 
     @Put(":id")
-    async updateUser(@Res() response, @Param('id') id: string, @Body() updateUserDto: UpdateUserDto): Promise<User> {
+    async updateUser(
+        @Res() res,
+        @Body() user: UpdateUserDto,
+        @Param("id") id: string
+    ): Promise<User> {
         try {
-
-            const user = await this.userService.updateUser(id, updateUserDto)
-            return response.status(HttpStatus.CREATED).json({
+            const updatedUser = await this.userService.updateById(id, user);
+            if (!updatedUser) {
+                throw new NotFoundException("Couldn't find any user with the given ID.");
+            }
+            return res.status(HttpStatus.OK).json({
                 success: true,
-                user,
-                message: "User Updated Successfully",
-                statusCode: HttpStatus.CREATED
+                statusCode: HttpStatus.OK,
+                message: "User data successfully updated",
+                data: updatedUser
             })
         } catch (error) {
-            return response.status(HttpStatus.BAD_REQUEST).json({
-                success: false,
-                errorStack: error,
-                message: error.message,
-                statusCode: HttpStatus.BAD_REQUEST
-
-            })
+            throw new BadRequestException(error.message || 'Failed to update user');
         }
     }
 
     @Delete(":id")
-    async deleteUser(@Res() response, @Param('id') id: string): Promise<User> {
-
+    async deleteUser(
+        @Res() res,
+        @Param("id") id: string
+    ): Promise<User> {
         try {
-
-            const user = await this.userService.deleteUser(id)
-            return response.status(HttpStatus.GONE).json({
+            const deletedUser = await this.userService.deleteById(id);
+            if (!deletedUser) {
+                throw new NotFoundException("Couldn't find any user with the given ID.");
+            }
+            return res.status(HttpStatus.OK).json({
                 success: true,
-                user,
-                message: "User Deleted Successfully",
-                statusCode: HttpStatus.GONE
+                statusCode: HttpStatus.OK,
+                message: "User data successfully deleted",
+                data: deletedUser
             })
         } catch (error) {
-            return response.status(HttpStatus.BAD_REQUEST).json({
-                success: false,
-                errorStack: error,
-                message: error.message,
-                statusCode: HttpStatus.BAD_REQUEST
-
-            })
+            throw new BadRequestException(error.message || 'Failed to delete user');
         }
     }
-
-
 }
